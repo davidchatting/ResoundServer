@@ -1,1 +1,10 @@
-{"main":"index.js","type":"module","dependencies":{"node-osc":"^9.1.1"}}
+{
+    "main": "index.js",
+    "type": "module",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.21.0",
+        "websocket": "^1.0.35",
+        "ws": "^8.18.0"
+    }
+}
