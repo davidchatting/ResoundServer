@@ -1,29 +1,26 @@
 let statuscode = 0;
-let rotationX = 0, targetRotationX = 0;
+let rotation = 0, targetRotation = 0;
+var logo;
 
 function preload(){
-  objModel = loadModel('http://192.168.0.51:8080/resound.obj', true, modelLoaded());
+  logo = loadImage("http://192.168.0.51:8080/resound_logo.png");
 }
 
 function setup(){
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  createCanvas(windowWidth, windowHeight);
 
-  setInterval(getStatus,500);
+  setInterval(getStatus,1000);
 }
-
 
 function draw(){
   background(200);
-  
-  //ambientLight(10);
-  //specularMaterial(100);
-
-  rotationX = rotationX + 0.1 * (targetRotationX - rotationX)
-  rotateX(rotationX);
-  rotateY(frameCount * 0.01);
-  rotateZ(PI);
-  normalMaterial();
-  model(objModel);
+  translate(width/2, height/2);
+  rotation = rotation + 0.1 * (targetRotation - rotation);
+  rotate(rotation);
+  push();
+    translate(-logo.width/2, -logo.height/2);
+    image(logo, 0, 0, logo.width, logo.height);
+  pop();
 }
 
 function modelLoaded(loadModel){ 
@@ -38,8 +35,8 @@ const getStatus = async _ => {
     statuscodeChange = statuscode ^ data.statuscode;
     if(statuscodeChange != 0) {
       if(statuscodeChange == 0xF0) {
-        if((data.statuscode & statuscodeChange) == 0xF0) targetRotationX = PI * -0.25;
-        else targetRotationX = PI * 0.8;
+        if((data.statuscode & statuscodeChange) == 0xF0) targetRotation = 0;
+        else targetRotation = -PI;
       }
     }
     statuscode = data.statuscode;
