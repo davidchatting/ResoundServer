@@ -11,7 +11,6 @@ function setup(){
   setInterval(getStatus,1000);
 }
 
-
 function draw(){
   background(200);
   
