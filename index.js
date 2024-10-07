@@ -1,80 +1,82 @@
-import http from 'node:http'
-import express from 'express'
-import cors from 'cors'
-import process from 'node:process'
-import crypto from 'node:crypto'
-import { WebSocketServer } from 'ws';
+import http from "node:http";
+import express from "express";
+import cors from "cors";
+import process from "node:process";
+import crypto from "node:crypto";
+import { WebSocketServer } from "ws";
 
-const app = express();
-app.use(cors());
-app.use(express.static('public'));
+const app = express().use(cors()).use(express.static("public"));
+
 const server = http.createServer(app);
 
 const wss = new WebSocketServer({ server });
 
-const sessions = {}
-function addSession(path) {
-  sessions[path] = new Map()
-  return(sessions[path])
+const sessions = new Map();
+
+function upsertSession(sessionId) {
+  let session = sessions.get(sessionId);
+  if (!session) {
+    session = new Map();
+    sessions.set(sessionId, session);
+  }
+  return session;
 }
 
-wss.on('connection', (ws, req) => {
+wss.on("connection", (ws, req) => {
   console.log(req.url);
 
   try {
-    const match = /(.+)\/?/.exec(req.url)
+    const match = /(.+)\/?/.exec(req.url);
     if (!match) {
-      console.error('Invalid socket path', req.url)
-      return
+      console.error("Invalid socket path", req.url);
+      return;
     }
+    const sessionId = match[1];
+    const session = upsertSession(sessionId);
 
-    var session = sessions[match[1]]
-    if (!session) session = addSession(match[1]);
+    const socketId = crypto.randomUUID();
+    console.debug("ws@connection", socketId);
+    session.set(socketId, ws);
 
-    const socketId = crypto.randomUUID()
-    console.debug('ws@connection', socketId)
-    session.set(socketId, ws)
+    ws.on("error", (...args) => console.error("wss@error", ...args));
 
-    console.log('***', session)
-
-    ws.on('error', (...args) => console.error('wss@error', ...args));
-
-    ws.on('message', (data) => {
+    ws.on("message", (data) => {
       try {
-        const json = JSON.parse(data)
-        
+        const session = upsertSession(sessionId);
+        const json = JSON.parse(data);
+
         for (const [id, socket] of session.entries()) {
-          if(id !== json['sender']) {
-            console.log("*", id, json)
-            send(socket, id, json)
+          if (id !== json["sender"]) {
+            send(socket, id, json);
           }
         }
-      }
-      catch (error) {
-        console.error('wss@message - invalid payload', error)
+      } catch (error) {
+        console.error("wss@message - invalid payload", error);
       }
     });
 
-    ws.on('close', () => {
-      console.debug('ws@close', socketId)
-      session.delete(socketId)
-    })
+    ws.on("close", () => {
+      //TODO - remove inactive sessions - go through map and count ids - zero then delete
+      console.debug("ws@close", socketId);
+      session.delete(socketId);
+    });
 
-    send(ws, socketId, { type:'id', socketId })
+    send(ws, socketId, { type: "id", socketId });
   } catch (error) {
-    console.error('socket error', error)
+    console.error("socket error", error);
   }
 });
 
 function send(ws, socketId, payload) {
-  console.debug('send id=%s', socketId, payload)
+  console.debug("send id=%s", socketId, payload);
   ws.send(JSON.stringify(payload));
 }
 
-process.on('uncaughtException', function (err) {
-   console.log(err);
-   process.exit(1);
+process.on("uncaughtException", (err) => {
+  console.log(err);
+  process.exit(1);
 });
 
-server.listen(8080);
-console.log('listening on 8080')
+server.listen(8080, () => {
+  console.log("listening on http://0.0.0.0:8080");
+});
