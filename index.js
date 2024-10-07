@@ -77,6 +77,12 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
+process.on("SIGINT", () => {
+  server.close(() => {
+    process.exit(0);
+  })
+});
+
 server.listen(8080, () => {
   console.log("listening on http://0.0.0.0:8080");
 });
