@@ -6,7 +6,7 @@ var graph = [];
 var debug = false;
 
 function preload(){
-  logo = loadImage("https://dreamy-badger.apps.openlab.dev/resound_logo.png");
+  logo = loadImage("/remote/resound_logo.png");
 }
 
 function setup(){
