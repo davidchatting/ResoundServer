@@ -29,7 +29,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/digitalinteraction/ResoundServer
+            ghcr.io/davidchatting/ResoundServer
           tags: |
             type=semver,pattern={{version}}
 
