@@ -13,7 +13,7 @@ void setup(){
   
   
   //wsc= new WebsocketClient(this, "ws://192.168.0.51:8080/daimoku/");  //443
-  wsc= new WebsocketClient(this, "ws://resound.openlab.dev/daimoku/");
+  wsc= new WebsocketClient(this, "ws://god@resound.openlab.dev/daimoku/");
   //wsc= new WebsocketClient(this, "ws://dreamy-badger.apps.openlab.dev/daimoku/");
   //wsc.enableDebug();
   json = new JSONObject();
