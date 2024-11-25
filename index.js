@@ -4,13 +4,14 @@ import cors from "cors";
 import process from "node:process";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
+import fs from "node:fs";
 
-const pkg = require('./package.json')
+const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
 
 const app = express().use(cors()).use(express.static("public"));
 
 app.get("/api/", (req, res) => {
-  res.end({
+  res.json({
     meta: {
       name: pkg.name,
       version: pkg.version,
