@@ -5,7 +5,18 @@ import process from "node:process";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
 
+const pkg = require('./package.json')
+
 const app = express().use(cors()).use(express.static("public"));
+
+app.get("/api/", (req, res) => {
+  res.end({
+    meta: {
+      name: pkg.name,
+      version: pkg.version,
+    }
+  })
+})
 
 const server = http.createServer(app);
 
