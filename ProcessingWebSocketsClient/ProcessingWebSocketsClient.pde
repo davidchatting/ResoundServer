@@ -1,11 +1,23 @@
+import de.looksgood.ani.*;
+import de.looksgood.ani.easing.*;
+
 import websockets.*;
 
 WebsocketClient wsc;
-JSONObject json;
 
 String socketId = "";
-int f = 0;
-float v = 0.0f;
+int micF = 0;
+float micV = 0.0f;
+int micX=-1, micY=-1;
+
+int waveF = 0;
+float waveV = 0.0f;
+int waveX=-1, waveY=-1;
+
+float notes[] = {261.63f, 277.18f, 293.66f, 311.13f, 329.63f, 349.23f, 369.99f, 392.00f, 415.30f, 440.00f, 466.16f, 493.88f};
+String keys = "qwertyuiop[]";
+
+int minFrequency = 80, maxFrequency=500;
 
 void setup(){
   size(500,500);
@@ -16,36 +28,94 @@ void setup(){
   wsc= new WebsocketClient(this, "ws://god@resound.openlab.dev/daimoku/");
   //wsc= new WebsocketClient(this, "ws://dreamy-badger.apps.openlab.dev/daimoku/");
   //wsc.enableDebug();
-  json = new JSONObject();
+  
+  Ani.init(this);
 }
 
 void draw(){
   background(0);
-  fill(v * 255);
-  textSize(44);
-  textAlign(CENTER, CENTER);
-  text(""+f,width/2,height/2);
+  drawWave();
+  drawMic();
 
   if(mousePressed) {
     if(socketId.length()>0){  //millis()>now+5000 &&
-      int f = (int) map(mouseX,0,width,60,400);
+      int f = (int) map(mouseX,0,width,minFrequency,maxFrequency);
       float v = map(mouseY,0,height,1.0f,0.0f);
       
-      sendTone(f,v);
+      if(!ready) f=-1;
+      sendTone(f,v,0);
     }
   }
 }
 
+void drawWave() {
+  noFill();
+  stroke(255);
+  
+  waveX = (int)map(waveF,minFrequency,maxFrequency,0,width);
+  waveY = (int)map(waveV,1.0f,0.0f,0,height);
+  
+  int r = 10;
+  circle(waveX,waveY,r);
+  fill(255);
+  textSize(10);
+  text(""+waveF, waveX+r, waveY);
+}
+
+void drawMic() {
+  noFill();
+  stroke(micV * 255);
+  
+  Ani.to(this, 1.0, "micX", (int)map(micF,minFrequency,maxFrequency,0,width));
+  Ani.to(this, 1.0, "micY", (int)map(micV,1.0f,0.0f,0,height));
+  
+  int r = 10;
+  line(micX-(r/2),micY-(r/2),micX+(r/2),micY+(r/2));
+  line(micX-(r/2),micY+(r/2),micX+(r/2),micY-(r/2));
+  fill(micV * 255);
+  textSize(10);
+  text(""+micF, micX+r, micY);
+}
+
 void mouseReleased() {
-  sendTone(100,0.0f);
+  sendTone(-1,0.0f,100);
+}
+
+boolean ready = true;
+void keyPressed() {
+  if(ready) {
+    int k = keys.indexOf(key);
+    if(k >= 0) {
+      sendTone((int)notes[k], 0.25f, 0);
+      ready = false;
+    }
+  }
+}
+
+void keyReleased() {
+  int k = keys.indexOf(key);
+  if(k >= 0) {
+    sendTone((int)notes[k], 0.25f, 50);
+  }
+  ready = true;
 }
 
 void sendTone(int f, float v) {
+  sendTone(f,v,0);
+}
+
+void sendTone(int f, float v, int t) {
   v = v < 0.1f ? 0.0f : v;
   
+  waveF = f;
+  waveV = v;
+  
+  JSONObject json = new JSONObject();
   json.setString("type", "data");
-  json.setInt("f", f);
-  json.setFloat("v", v);
+  if(f>=0) json.setInt("f", f);
+  if(v>=0) json.setFloat("v", v);
+  if(t>=0) json.setFloat("t", t);
+  json.setString("shape","sine");
   json.setString("sender", socketId);
   
   println("send > " + json.toString());
@@ -61,8 +131,8 @@ void webSocketEvent(String msg){
     socketId = json.getString("socketId");
   }
   else if(type.equals("data")) {
-    f = json.getInt("f");
-    v = json.getFloat("v");
+    micF = json.getInt("f");
+    micV = json.getFloat("v");
     //println("data: " + f + " " + v);
   }
 }
