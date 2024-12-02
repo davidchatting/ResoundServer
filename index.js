@@ -57,10 +57,15 @@ wss.on("connection", (ws, req) => {
         const session = upsertSession(sessionId);
         const json = JSON.parse(data);
 
-        for (const [id, socket] of session.entries()) {
-          if (id !== json["sender"]) {
-            send(socket, id, json);
+        if(json["type"] == "data") {
+          for (const [id, socket] of session.entries()) {
+            if (id !== json["sender"]) {
+              send(socket, id, json);
+            }
           }
+        }
+        else if(json["type"] == "id") {
+          
         }
       } catch (error) {
         console.error("wss@message - invalid payload", error);
